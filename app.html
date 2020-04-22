@@ -21,6 +21,8 @@
 	
 	<script>
 	var dataCorrente = new Date();
+	var primoDelMese = new Date();
+	primoDelMese.setDate(1);
 	function adesso() {
 		return dataCorrente.toISOString().substr(0,19);
 	}
@@ -29,13 +31,16 @@
 	Number.prototype.toEuro = function(n, x) {
 		return this.toFixed(2).replace(/\./, ',').replace(regexEuro, '$&.');
 	};
+	Date.prototype.format = function() {
+		return this.toISOString().split('T')[0];
+	};
 	var refertoType = {grigio: 'grigio', verde: 'verde', arancione: 'arancione', rosso: 'rosso'}
 	
 	var pazienteType = {
 		id: null,
 		nome: null, cognome: null, telefono: null, medico: null,
 		tipoReferto: null,
-		dataVisita: null,  //dataCorrente.toISOString().split('T')[0],
+		dataVisita: null,  //dataCorrente.format(),
 		dataInvioLaboratorio: null,
 		dataRitiroLaboratorio: null,
 		dataNuovoAppuntamento: null,
@@ -49,9 +54,9 @@
 		//for (i=0; i<10; i=i+2) {
 			let p1 = {id:1,nome:'Alba',cognome:'Parietti',telefono:'0672657988',medico:'Colagiovanni',tipoReferto:'verde',
 					  dataVisita: '2020-04-08',	dataInvioLaboratorio: '2020-04-10', dataRitiroLaboratorio: '2020-04-15', dataNuovoAppuntamento: '2020-04-20', dataConsegna: null}
-			let p2 = {id:2,nome:'Raffaella',cognome:'Fico',telefono:'33378555220',medico:'Hysani',tipoReferto:'arancione',
+			let p2 = {id:2,nome:'Raffaella',cognome:'Fico',telefono:'33378555220',medico:'Hyseni',tipoReferto:'arancione',
 					  dataVisita: '2020-04-10',	dataInvioLaboratorio: '2020-04-12', dataRitiroLaboratorio: '2020-04-16', dataNuovoAppuntamento: null, dataConsegna: null}
-			let p3 = {id:3,nome:'Antonella',cognome:'Elia',telefono:'32868005580',medico:'Hysani',tipoReferto:'rosso',
+			let p3 = {id:3,nome:'Antonella',cognome:'Elia',telefono:'32868005580',medico:'Hyseni',tipoReferto:'rosso',
 					  dataVisita: '2020-04-11',	dataInvioLaboratorio: '2020-04-12', dataRitiroLaboratorio: '2020-04-16', dataNuovoAppuntamento: '2020-04-20', dataConsegna: '2020-04-20'}
 			let p4 = {id:4,nome:'Maria',cognome:'De Filippi',telefono:'3499009900',medico:'Veraldi',tipoReferto:'grigio',
 					  dataVisita: '2020-04-21',	dataInvioLaboratorio: null, dataRitiroLaboratorio: null, dataNuovoAppuntamento: null, dataConsegna: null}
@@ -139,8 +144,10 @@
 						<select class="input is-primary" v-model="paziente.medico" v-on:change="filtra">
 							<option>Veraldi</option>
 							<option>Colagiovanni</option>
-							<option>Hysani</option>
+							<option>Hyseni</option>
 							<option>Bellantone</option>
+							<option>Assorgi</option>
+							<option>Guri</option>
 						</select>
 					</p>
 					<p class="help">selezionare il medico che ha effettuato la visita</p>
@@ -150,7 +157,7 @@
 					<p class="control">
 						<select class="input is-primary" v-model="paziente.tipoReferto" style="width:100px" v-bind:class="paziente.tipoReferto" v-on:change="filtra">
 							<option></option>
-							<option class="grigio" value="grigio" selected></option>
+							<option class="grigio" value="grigio"></option>
 							<option class="verde" value="verde">verde</option>
 							<option class="arancione" value="arancione">arancione</option>
 							<option class="rosso" value="rosso">rosso</option>
@@ -159,6 +166,37 @@
 					<p class="help">selezionare il colore del referto</p>
 				</div>
 				<div class="column">
+					<p class="control" style="padding-top:32px">
+					<button class="button is-link" v-on:click="filtraReferti" title="tutti i referti ancora non ritornati dal laboratorio">
+						<span class="icon is-small">
+							<i class="fas fa-lg fa-microscope"></i>
+						</span>
+					</button>
+					<button class="button is-link" v-on:click="filtraAppuntamenti" title="tutti i pazienti da chiamare (rossi e arancioni)
+per concordare l'appuntamento con il medico">
+						<span class="icon is-small">
+							<i class="fas fa-lg fa-phone"></i>
+						</span>
+					</button>
+					<button class="button is-link" v-on:click="filtraAppuntamentiMancati" title="tutti i pazienti (rossi e arancioni) con appuntamento,
+ma che non hanno ritirato il referto,
+overo non si sono ancora presentati">
+						<span class="icon is-small">
+							<i class="fas fa-lg fa-heartbeat"></i>
+						</span>
+					</button>
+					<button class="button is-link" v-on:click="filtraUltimoMese" title="l'utimo mese">
+						<span class="icon is-small">
+							<i class="far fa-lg fa-calendar-alt"></i>
+						</span>
+					</button>
+					<button v-bind:disabled="paziente.id!=null" class="button is-link" v-on:click="filtra" title="ricerca libera con i dati e gli operatori presenti nei campi">
+						<span class="icon is-small">
+							<i class="fas fa-lg fa-search"></i>
+						</span>
+					</button>
+					</p>
+					<p class="help">ricerche pre impostate</p>
 				</div>
 			</div>
 			<div class="columns">
@@ -209,25 +247,20 @@
 				
 				<div class="column field">
 					<p class="control" style="padding-top:32px">
-					<button class="button is-danger" v-on:click="nuovo" title="pulisci campi">
+					<button class="button is-danger" v-on:click="nuovo" title="pulisci campi per nuovo inserimento o per ricerca">
 						<span class="icon is-small">
-						  <i class="fas fa-redo-alt"></i>
-						</span>
-					</button>
-					<button class="button is-link" v-on:click="filtra" title="filtra la tabella con i data presenti nei campi">
-						<span class="icon is-small">
-							<i class="fas fa-search"></i>
+						  <i class="fas fa-lg fa-redo-alt"></i>
 						</span>
 					</button>
 					<button class="button is-success" v-on:click="aggiorna" title="aggiorna">
 						<span class="icon is-small">
-							<i class="far fa-save"></i>
+							<i class="far fa-lg fa-save"></i>
 							<!-- i class="fas fa-plus-circle"></i-->
 						</span>
 					</button>
 					<button class="button is-danger" v-on:click="elimina" title="rimuovi il paziente selezionato">
 						<span class="icon is-small">
-							<i class="far fa-trash-alt"></i>
+							<i class="far fa-lg fa-trash-alt"></i>
 						</span>
 					</button>
 					<!--button class="button is-success" v-on:click="salva" title="salva sul computer">
@@ -235,9 +268,9 @@
 							<i class="far fa-hdd"></i>
 						</span>
 					</button-->
-					<button class="button is-info" v-on:click="toExcel" title="esporta tabella su excel">
+					<button class="button is-success" v-on:click="toExcel" title="esporta su excel">
 						<span class="icon is-small">
-							<i class="far fa-file-excel"></i>
+							<i class="fas fa-lg fa-file-excel"></i>
 						</span>
 					</button>
 					</p>
@@ -256,7 +289,7 @@
 				</tr>
 			</thead>
 			<tbody v-for="p in dbfiltrato">
-				<tr v-on:click="selezionaRiga(p.id)">
+				<tr v-bind:class="selezionaRiga(p.id)" v-on:click="selezionaPaziente(p.id)">
 					<td v-bind:class="p.tipoReferto">{{p.tipoReferto}}</td><td>{{p.nome}}</td><td>{{p.cognome}}</td><td>{{p.telefono}}</td><td>{{p.medico}}</td>
 					<td>{{p.dataVisita}}</td><td>{{p.dataInvioLaboratorio}}</td><td>{{p.dataRitiroLaboratorio}}</td><td>{{p.dataNuovoAppuntamento}}</td><td>{{p.dataConsegna}}</td>
 				</tr>
@@ -285,11 +318,6 @@
 			},
 			computed : {
 				dbfiltrato : function() {
-					/*for (let key in this.filtro) {
-						if (key=="nome" || key=="cognome") {
-							this.filtro[key]={likenocase:this.filtro[key]};
-						}
-					}*/
 					return this.db().filter(this.filtro).order("id desc").get();
 				},
 				hasOperatore: function() {
@@ -300,12 +328,12 @@
 				aggiorna : function() {
 					if (this.paziente.id==null) {
 						this.paziente.id=this.db().max("id")+1;
-						//this.db.insert(this.paziente);
-					//} else {
-						//this.db({id:this.paziente.id}).update(this.paziente)
-						this.filtro = {dataVisita: dataCorrente.toISOString().split('T')[0]};
+						if (this.paziente.tipoReferto==null)
+							this.paziente.tipoReferto='grigio';
+						if (this.paziente.dataVisita==null)
+							this.paziente.dataVisita=dataCorrente.format();
+						this.filtro={dataVisita:dataCorrente.format()}
 					} else {
-						//this.filtro = {id:this.paziente.id};
 						filtroPrecedente = this.filtro;
 						this.filtro = {id:-1}
 						this.filtro = filtroPrecedente;
@@ -323,8 +351,6 @@
 				},
 				nuovo : function() {
 					this.paziente =  Object.assign({}, pazienteType);
-					this.paziente.tipoReferto=null;
-					this.paziente.dataVisita=null;
 					this.filtro = {};
 				},
 				cambiaOperatore : function(op) {
@@ -339,32 +365,56 @@
 						let f = {};
 						for (let key in this.filtro) {
 						   if (this.filtro.hasOwnProperty(key)) {
-						      console.log(key, this.filtro[key]);
+						      //console.log(key, this.filtro[key]);
 						      let oper = this.operatoreTipo[this.operatore[key]];
 						      if (oper) {
 						    	  //opk = Object.keys(oper)[0];
 						    	  opv = Object.values(oper)[0];
 						    	  let filtro = new Object();
-						    	  if (opv=='isNull')
-						    		  filtro[opv] = true;
-						    	  else
-						    		  filtro[opv] = this.filtro[key];
+						    	  filtro[opv] = this.filtro[key];
 						    	  f[key] = filtro;
 						      } else {
 						    	  f[key] = this.filtro[key];
 						      }
 						   }
 						}
+						for (let key in this.operatore) {
+							console.log(key, this.operatore[key]);
+							if (this.operatore[key]==4){
+								f[key] = {isNull:true}
+							}
+						}
 						console.log(f);
 						this.filtro = f;
 					}
 				},
+				filtraUltimoMese : function() {
+					this.paziente = Object.assign({}, pazienteType);
+					this.paziente.dataVisita=primoDelMese.format();
+					this.operatore.dataVisita=2;
+					this.filtra();
+				},
+				filtraReferti : function() {
+					this.paziente = Object.assign({}, pazienteType);
+					this.filtro={dataInvioLaboratorio:{"!is":null},dataRitiroLaboratorio:{isNull:true}}
+				},
+				filtraAppuntamenti : function() {
+					this.paziente = Object.assign({}, pazienteType);
+					this.filtro={tipoReferto:["arancione","rosso"], dataRitiroLaboratorio:{"!is":null}, dataNuovoAppuntamento:{isNull:true}}
+				},
+				filtraAppuntamentiMancati : function() {
+					this.paziente = Object.assign({}, pazienteType);
+					this.filtro={tipoReferto:["arancione","rosso"], dataNuovoAppuntamento:{"!is":null}, dataConsegna:{isNull:true}}
+				},
 				salva : function() {
 					//this.db.store("pazientidb");
-					localStorage.setItem( 'taffy_pazientidb', JSON.stringify( this.db().get() ) );
+					localStorage.setItem( "taffy_pazientidb", JSON.stringify( this.db().get() ) );
+				},
+				selezionaPaziente : function(idx) {
+					this.paziente= Object.assign({}, this.db({id:idx}).get()[0]);
 				},
 				selezionaRiga : function(idx) {
-					this.paziente= Object.assign({}, this.db({id:idx}).get()[0]);
+					return (this.paziente.id==idx)?'is-selected':'';
 				},
 				toExcel : function() {
 					let wb = XLSX.utils.book_new();
@@ -381,6 +431,7 @@
 						dati.push([r.nome, r.cognome, r.telefono, r.medico, r.dataVisita, r.dataInvioLavoratorio, r.dataRitiroLaboratorio, r.dataNuovoAppuntamento, r.dataConsegna]);
 					}
 					let ws = XLSX.utils.aoa_to_sheet(dati);
+					ws['!autofilter'] = { ref: "A1:I"+dati.length };
 					wb.Sheets["Pazienti"] = ws;
 					let wbout = XLSX.write(wb, {bookType:'xlsx',  type: 'binary'});
 					saveAs(new Blob([s2ab(wbout)],{type:"application/octet-stream"}), 'pazienti-ginecologia-'+adesso()+'.xlsx');
