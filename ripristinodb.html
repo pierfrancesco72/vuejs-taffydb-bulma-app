@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<title>Referti Ginecologia: ripristino DB</title>
+
+	<link rel="stylesheet" href="css/bulma.min.css">
+	<style>
+		.grigio {background:gray}
+		.verde {background:lime}
+		.arancione {background:orange}
+		.rosso {background:red}
+		abbr {color:#3273dc;}
+	</style>
+
+    <script defer src="js/fontawesome.js"></script>
+
+</head>
+<body>
+
+<span
+		style="position: absolute; right: 10px; top: 0px; z-index: 10000000;">
+		(testato solo con chrome browser) </span>
+
+	<nav class="navbar is-link" role="navigation" aria-label="main navigation">
+		<div class="navbar-brand">
+			<span class="icon is-large" style="margin-top:6px;margin-left:10px">
+				<i class="fas fa-user-md fa-3x"></i>
+			</span>
+			<a role="button" class="navbar-burger" aria-label="menu"
+				aria-expanded="false"> <span aria-hidden="true"></span> <span
+				aria-hidden="true"></span> <span aria-hidden="true"></span>
+			</a>
+			<div id="navbarBasicExample" class="navbar-menu">
+				<div class="navbar-start">
+					<span class="navbar-item title">Referti Ginecologia: importazione database di backup</span>
+				</div>
+			</div>
+		</div>
+	</nav>
+
+	<section id="applicazione" class="section">
+		<div  class="container">
+			<h2 class="title" v-on:click.ctrl="resettaDB">selezionare il file da importare nell'applicazione:</h2>
+			<div class="columns">
+				<div class="column field file has-name is-fullwidth">
+				  <label class="file-label" title="scegli quello con la data più recente">
+					<input class="file-input" type="file" name="fileBackup" accept=".json" dirName="Download">
+					<span class="file-cta">
+					  <span class="file-icon">
+						<i class="fas fa-upload"></i>
+					  </span>
+					  <span class="file-label">
+						Cerca il file…
+					  </span>
+					</span>
+					<span class="file-name" id="descrizione">
+					  cercalo nella directory <i>Download</i>, con il nome <b><i>pazientidb-[data:ora].json</i></b>
+					</span>
+				  </label>
+				</div>
+				<!--div class="column field">
+					<button class="button is-link" v-on:click="importaDB" title="importa il backup selezionato nell'applicazione">
+						<span class="icon is-small">
+							<i class="far fa-lg fa-hdd"></i>
+						</span>
+					</button>
+				</div-->
+				<div class="column field">
+					<p id="messaggio"></p>
+				</div>
+			</div>
+			<div class="columns">
+				<div class="column field">
+					<a id="bottone" class="is-hidden" href="app.html">
+						ritorna all'applicazione
+					</a>
+				</div>
+			</div>
+		</div>
+	</section>
+	<script>
+	document.querySelector('input').addEventListener('change', function() {
+
+	  var reader = new FileReader();
+	  reader.onload = function() {
+
+		var arrayBuffer = this.result,
+		  array = new Uint8Array(arrayBuffer),
+		  binaryString = String.fromCharCode.apply(null, array);
+
+		  let nomeFile=document.querySelector('input').value;
+		  nomeFile = nomeFile.substr(nomeFile.lastIndexOf("\\")+1);
+
+		document.getElementById("descrizione").innerText=nomeFile;
+		//console.log(binaryString);
+		try {
+			localStorage.setItem( "taffy_pazientidb", binaryString );
+
+			document.getElementById("messaggio").innerText="Il database pazientidb è stato caricato correttamente!";
+			document.getElementById("bottone").className="button is-link";
+		} catch (e) {
+
+			document.getElementById("messaggio").innerText="c'è stato un problema!";
+		}
+
+	  }
+	  reader.readAsArrayBuffer(this.files[0]);
+
+	}, false);
+	</script>
+</body>
+</html>
