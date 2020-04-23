@@ -50,7 +50,7 @@
 	pazientidb.store("pazientidb");
 	
 	
-	if (pazientidb().count()==0) {
+	/*if (pazientidb().count()==0) {
 		//for (i=0; i<10; i=i+2) {
 			let p1 = {id:1,nome:'Alba',cognome:'Parietti',telefono:'0672657988',medico:'Colagiovanni',tipoReferto:'verde',
 					  dataVisita: '2020-04-08',	dataInvioLaboratorio: '2020-04-10', dataRitiroLaboratorio: '2020-04-15', dataNuovoAppuntamento: '2020-04-20', dataConsegna: null}
@@ -65,7 +65,7 @@
 			pazientidb.insert(p3);
 			pazientidb.insert(p4);
 		//}
-	}
+	}*/
 	
 	
 	function eliminaValoriNulli(ob) {
@@ -94,7 +94,6 @@
 
 	<nav class="navbar is-link" role="navigation" aria-label="main navigation">
 		<div class="navbar-brand">
-			<!-- img src="https://avatars1.githubusercontent.com/u/80584?v=4&s=140"-->
 			<span class="icon is-large" style="margin-top:6px;margin-left:10px">
 				<i class="fas fa-user-md fa-3x"></i>
 			</span>
@@ -268,9 +267,16 @@ overo non si sono ancora presentati">
 							<i class="far fa-hdd"></i>
 						</span>
 					</button-->
-					<button class="button is-success" v-on:click="toExcel" title="esporta su excel">
+					<button class="button is-success" v-on:click="toExcel" title="esporta quanto presente in tabella su excel">
 						<span class="icon is-small">
 							<i class="fas fa-lg fa-file-excel"></i>
+						</span>
+					</button>
+					<button class="button is-success" v-on:click="esportaDB" title="esporta tutto il DB su file per backup.
+E' consigliato tutte le sere.
+Non si sa mai!">
+						<span class="icon is-small">
+							<i class="far fa-lg fa-hdd"></i>
 						</span>
 					</button>
 					</p>
@@ -436,11 +442,16 @@ overo non si sono ancora presentati">
 					let wbout = XLSX.write(wb, {bookType:'xlsx',  type: 'binary'});
 					saveAs(new Blob([s2ab(wbout)],{type:"application/octet-stream"}), 'pazienti-ginecologia-'+adesso()+'.xlsx');
 				},
+				esportaDB : function() {
+					let db = JSON.stringify( this.db().get() );
+					saveAs(new Blob([db],{type: "application/json"}), 'pazientidb-'+adesso()+'.json');
+				},
 				resettaDB : function() {
 					let ris = confirm("Confermi la rimozione dell'intero db?");
 					if (ris) {
 						this.db().remove();
 						this.filtro = {};
+                        localStorage.removeItem( "taffy_pazientidb" );
 					}
 				}
 			},
