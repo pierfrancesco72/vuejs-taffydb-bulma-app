@@ -7,14 +7,6 @@
 	<title>Referti Ginecologia: ripristino DB</title>
 
 	<link rel="stylesheet" href="css/bulma.min.css">
-	<style>
-		.grigio {background:gray}
-		.verde {background:lime}
-		.arancione {background:orange}
-		.rosso {background:red}
-		abbr {color:#3273dc;}
-	</style>
-
     <script defer src="js/fontawesome.js"></script>
 
 </head>
@@ -96,16 +88,20 @@
 
 		document.getElementById("descrizione").innerText=nomeFile;
 		//console.log(binaryString);
-		try {
-			localStorage.setItem( "taffy_pazientidb", binaryString );
+        let ris = confirm("Confermi il ripristino del DB? L'eventuale DB preesistente verrà sovrascritto.");
+        if (ris) {
+            try {
+                localStorage.setItem( "taffy_pazientidb", binaryString );
 
-			document.getElementById("messaggio").innerText="Il database pazientidb è stato caricato correttamente!";
-			document.getElementById("bottone").className="button is-link";
-		} catch (e) {
+                document.getElementById("messaggio").innerText="Il database pazientidb è stato caricato correttamente!";
+                document.getElementById("bottone").className="button is-link";
+            } catch (e) {
 
-			document.getElementById("messaggio").innerText="c'è stato un problema!";
-		}
-
+                document.getElementById("messaggio").innerText="c'è stato un problema!";
+            }
+        } else {
+             document.getElementById("messaggio").innerText="Il database pazientidb non è stato caricato!";
+        }
 	  }
 	  reader.readAsArrayBuffer(this.files[0]);
 

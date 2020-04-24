@@ -9,9 +9,9 @@
 	<link rel="stylesheet" href="css/bulma.min.css">
 	<style>
 		.grigio {background:gray}
-		.verde {background:lime}
-		.arancione {background:orange}
-		.rosso {background:red}
+		.verde {background:hsl(141, 71%, 48%)}
+		.arancione {background:hsl(48, 100%, 67%)}
+		.rosso {background:hsl(348, 100%, 61%)}
 		abbr {color:#3273dc;}
 	</style> 
 	<script src="js/vue.js"></script>
@@ -76,6 +76,13 @@
 		   }
 		}
 	}
+    function convertiValoriSpazioInNull(ob) {
+		for (let key in ob) {
+		   if (ob.hasOwnProperty(key) && ob[key]=='') {
+		      ob[key]=null;
+		   }
+		}
+	}
 	
 	function nextOperatore(idx) {
 		if (idx==4)
@@ -89,9 +96,10 @@
 <body>
 
 	<span
-		style="position: absolute; right: 10px; top: 0px; z-index: 10000000;">
+		style="position: absolute; right: 10px; top: 64px; z-index: 10000000;">
 		(testato solo con chrome browser) </span>
 
+    <section id="applicazione">
 	<nav class="navbar is-link" role="navigation" aria-label="main navigation">
 		<div class="navbar-brand">
 			<span class="icon is-large" style="margin-top:6px;margin-left:10px">
@@ -107,9 +115,42 @@
 				</div>
 			</div>
 		</div>
+        <div class="navbar-end">
+          <div class="navbar-item">
+            <div class="field is-grouped">
+              <p class="control">
+                <button class="button is-link" v-on:click="toExcel" title="esporta quanto presente in tabella su excel">
+                  <span class="icon">
+                    <i class="fas fa-lg fa-file-excel"></i>
+                  </span>
+                  <span>Export Xlsx</span>
+                </button>
+              </p>
+              <p class="control">
+                <button class="button is-link" v-on:click="esportaDB" title="esporta tutto il DB su file per backup.
+E' consigliato tutte le sere.
+Non si sa mai!">
+                  <span class="icon">
+                    <i class="far fa-lg fa-hdd"></i>
+                  </span>
+                  <span>Backup DB</span>
+                </button>
+              </p>
+              <p class="control">
+                <button class="button is-danger" v-on:click="backupEliminazionePazientiConRefertoConsegnato" title="eliminazione, previo backup su excel, dei pazienti
+con data di Consegna del referto, più vecchia di 3 mesi">
+                    <span class="icon">
+                        <i class="far fa-lg fa-hdd"></i>
+                    </span>
+                    <span>Backup Xlsx</span>
+				</button>
+              </p>
+            </div>
+          </div>
+        </div>
 	</nav>
-	
-	<section id="applicazione" class="section" style="padding-top:0px">
+
+	<section class="section" style="padding-top:0px">
 		<div  class="container">
 			<h2 class="title" v-on:click.ctrl="resettaDB">paziente:</h2>
 			<div class="columns">
@@ -203,7 +244,7 @@ overo non si sono ancora presentati">
 					<a class="label" title="clicca per cambiare operatore di filtro" v-on:click="cambiaOperatore('dataVisita')">data visita:
 					<abbr v-bind:class="hasOperatore">{{Object.keys( operatoreTipo[operatore.dataVisita] )[0] }}</abbr></a>
 					<p class="control">
-						<input class="input is-primary" v-model="paziente.dataVisita" type="date">
+						<input class="input is-primary" v-model="paziente.dataVisita" type="date" @keyup.enter="aggiorna">
 					</p>
 					<p class="help">indicare la data della visita</p>
 				</div>
@@ -212,7 +253,7 @@ overo non si sono ancora presentati">
 					<a class="label" title="clicca per cambiare operatore di filtro" v-on:click="cambiaOperatore('dataInvioLaboratorio')">data invio lab:
 					<abbr v-bind:class="hasOperatore">{{Object.keys( operatoreTipo[operatore.dataInvioLaboratorio] )[0] }}</abbr></a>
 					<p class="control">
-						<input class="input is-primary" v-model="paziente.dataInvioLaboratorio"	type="date">
+						<input class="input is-primary" v-model="paziente.dataInvioLaboratorio"	type="date" @keyup.enter="aggiorna">
 					</p>
 					<p class="help">selezionare la data in cui è stato effettuato l'invio al laboratorio</p>
 				</div>
@@ -221,7 +262,7 @@ overo non si sono ancora presentati">
 					<a class="label" title="clicca per cambiare operatore di filtro" v-on:click="cambiaOperatore('dataRitiroLaboratorio')">data ritiro lab:
 					<abbr v-bind:class="hasOperatore">{{Object.keys( operatoreTipo[operatore.dataRitiroLaboratorio] )[0] }}</abbr></a>
 					<p class="control">
-						<input class="input is-primary" v-model="paziente.dataRitiroLaboratorio" type="date">
+						<input class="input is-primary" v-model="paziente.dataRitiroLaboratorio" type="date" @keyup.enter="aggiorna">
 					</p>
 					<p class="help">selezionare la data in cui è stato effettuato il ritiro dal laboratiorio</p>
 				</div>
@@ -230,7 +271,7 @@ overo non si sono ancora presentati">
 					<a class="label" title="clicca per cambiare operatore di filtro" v-on:click="cambiaOperatore('dataNuovoAppuntamento')">data nuovo app:
 					<abbr v-bind:class="hasOperatore">{{Object.keys( operatoreTipo[operatore.dataNuovoAppuntamento] )[0] }}</abbr></a>
 					<p class="control">
-						<input class="input is-primary" v-model="paziente.dataNuovoAppuntamento" type="date">
+						<input class="input is-primary" v-model="paziente.dataNuovoAppuntamento" type="date"  @keyup.enter="aggiorna">
 					</p>
 					<p class="help">selezionare la data in cui è stato prenotato un <i>eventuale</i> nuovo appuntamento con il medico</p>
 				</div>
@@ -239,7 +280,7 @@ overo non si sono ancora presentati">
 					<a class="label" title="clicca per cambiare operatore di filtro" v-on:click="cambiaOperatore('dataConsegna')">data consegna ref:
 					<abbr v-bind:class="hasOperatore">{{Object.keys( operatoreTipo[operatore.dataConsegna] )[0] }}</abbr></a>
 					<p class="control">
-						<input class="input is-primary" v-model="paziente.dataConsegna" type="date">
+						<input class="input is-primary" v-model="paziente.dataConsegna" type="date" @keyup.enter="aggiorna">
 					</p>
 					<p class="help">selezionare la data della consegna del referto</p>
 				</div>
@@ -262,24 +303,7 @@ overo non si sono ancora presentati">
 							<i class="far fa-lg fa-trash-alt"></i>
 						</span>
 					</button>
-					<!--button class="button is-success" v-on:click="salva" title="salva sul computer">
-						<span class="icon is-small">
-							<i class="far fa-hdd"></i>
-						</span>
-					</button-->
-					<button class="button is-success" v-on:click="toExcel" title="esporta quanto presente in tabella su excel">
-						<span class="icon is-small">
-							<i class="fas fa-lg fa-file-excel"></i>
-						</span>
-					</button>
-					<button class="button is-success" v-on:click="esportaDB" title="esporta tutto il DB su file per backup.
-E' consigliato tutte le sere.
-Non si sa mai!">
-						<span class="icon is-small">
-							<i class="far fa-lg fa-hdd"></i>
-						</span>
-					</button>
-					</p>
+                    </p>
 				</div>
 			</div>
 		</div>
@@ -295,9 +319,13 @@ Non si sa mai!">
 				</tr>
 			</thead>
 			<tbody v-for="p in dbfiltrato">
-				<tr v-bind:class="selezionaRiga(p.id)" v-on:click="selezionaPaziente(p.id)">
+				<tr v-bind:class="selezionaRiga(p.id)" v-on:click="selezionaPaziente(p.id)"  title="se clicchi sulla colonna data del selezionato, se vuota, ne inserisci la data corrente">
 					<td v-bind:class="p.tipoReferto">{{p.tipoReferto}}</td><td>{{p.nome}}</td><td>{{p.cognome}}</td><td>{{p.telefono}}</td><td>{{p.medico}}</td>
-					<td>{{p.dataVisita}}</td><td>{{p.dataInvioLaboratorio}}</td><td>{{p.dataRitiroLaboratorio}}</td><td>{{p.dataNuovoAppuntamento}}</td><td>{{p.dataConsegna}}</td>
+					<td >{{p.dataVisita}}</td>
+                    <td style="cursor: cell" v-on:click="setDataCorrente(p.id, 'dataInvioLaboratorio')">{{p.dataInvioLaboratorio}}</td>
+                    <td style="cursor: cell" v-on:click="setDataCorrente(p.id, 'dataRitiroLaboratorio')">{{p.dataRitiroLaboratorio}}</td>
+                    <td style="cursor: cell" v-on:click="setDataCorrente(p.id, 'dataNuovoAppuntamento')">{{p.dataNuovoAppuntamento}}</td>
+                    <td style="cursor: cell" v-on:click="setDataCorrente(p.id, 'dataConsegna')">{{p.dataConsegna}}</td>
 				</tr>
 			</tbody>
 		
@@ -305,7 +333,7 @@ Non si sa mai!">
 		
 		</div>
 	</section>
-	
+	</section>
 	
 	
 	
@@ -340,6 +368,7 @@ Non si sa mai!">
 							this.paziente.dataVisita=dataCorrente.format();
 						this.filtro={dataVisita:dataCorrente.format()}
 					} else {
+                        convertiValoriSpazioInNull(this.paziente);
 						filtroPrecedente = this.filtro;
 						this.filtro = {id:-1}
 						this.filtro = filtroPrecedente;
@@ -402,19 +431,19 @@ Non si sa mai!">
 				},
 				filtraReferti : function() {
 					this.paziente = Object.assign({}, pazienteType);
-					this.filtro={dataInvioLaboratorio:{"!is":null},dataRitiroLaboratorio:{isNull:true}}
+					this.filtro={dataInvioLaboratorio:{"!is":null},dataRitiroLaboratorio:null}
 				},
 				filtraAppuntamenti : function() {
 					this.paziente = Object.assign({}, pazienteType);
-					this.filtro={tipoReferto:["arancione","rosso"], dataRitiroLaboratorio:{"!is":null}, dataNuovoAppuntamento:{isNull:true}}
+					this.filtro={tipoReferto:["arancione","rosso"], dataRitiroLaboratorio:{"!is":null}, dataNuovoAppuntamento:null}
 				},
 				filtraAppuntamentiMancati : function() {
 					this.paziente = Object.assign({}, pazienteType);
-					this.filtro={tipoReferto:["arancione","rosso"], dataNuovoAppuntamento:{"!is":null}, dataConsegna:{isNull:true}}
+					this.filtro={tipoReferto:["arancione","rosso"], dataNuovoAppuntamento:{"!is":null}, dataConsegna:null}
 				},
 				salva : function() {
 					//this.db.store("pazientidb");
-					localStorage.setItem( "taffy_pazientidb", JSON.stringify( this.db().get() ) );
+					localStorage.setItem( "taffy_pazientidb", JSON.stringify( this.db().get() ));
 				},
 				selezionaPaziente : function(idx) {
 					this.paziente= Object.assign({}, this.db({id:idx}).get()[0]);
@@ -422,7 +451,15 @@ Non si sa mai!">
 				selezionaRiga : function(idx) {
 					return (this.paziente.id==idx)?'is-selected':'';
 				},
-				toExcel : function() {
+                setDataCorrente : function(idx, dt) {
+					if (this.paziente.id==idx) {
+                        if (this.paziente[dt]==null){
+                            this.paziente[dt]=dataCorrente.format();
+                            this.aggiorna();
+                        }
+                    }
+				},
+				toExcel : function(bkp) {
 					let wb = XLSX.utils.book_new();
 					wb.Props = {
 		                Title: "Ginecologia",
@@ -434,13 +471,14 @@ Non si sa mai!">
 					let dati = [["Nome", "Cognome", "Telefono", "Medico", "Tipo Referto", "Data Visita", "Data Invio Laboratorio", "Data Ritiro Laboratorio", "Data Nuovo Appuntamento", "Data Consenga Referto"]];
 					for (rx in this.dbfiltrato) {
 						r = this.dbfiltrato[rx];
-						dati.push([r.nome, r.cognome, r.telefono, r.medico, r.dataVisita, r.dataInvioLavoratorio, r.dataRitiroLaboratorio, r.dataNuovoAppuntamento, r.dataConsegna]);
+						dati.push([r.nome, r.cognome, r.telefono, r.medico, r.tipoReferto, r.dataVisita, r.dataInvioLaboratorio, r.dataRitiroLaboratorio, r.dataNuovoAppuntamento, r.dataConsegna]);
 					}
 					let ws = XLSX.utils.aoa_to_sheet(dati);
-					ws['!autofilter'] = { ref: "A1:I"+dati.length };
+					ws['!autofilter'] = { ref: "A1:J"+dati.length };
 					wb.Sheets["Pazienti"] = ws;
 					let wbout = XLSX.write(wb, {bookType:'xlsx',  type: 'binary'});
-					saveAs(new Blob([s2ab(wbout)],{type:"application/octet-stream"}), 'pazienti-ginecologia-'+adesso()+'.xlsx');
+                    if (!bkp) bkp='';
+					saveAs(new Blob([s2ab(wbout)],{type:"application/octet-stream"}), 'pazienti-ginecologia-'+bkp+adesso()+'.xlsx');
 				},
 				esportaDB : function() {
 					let db = JSON.stringify( this.db().get() );
@@ -453,14 +491,23 @@ Non si sa mai!">
 						this.filtro = {};
                         localStorage.removeItem( "taffy_pazientidb" );
 					}
-				}
-			},
-		    watch : {
-				/*paziente : function(vecchio, nuovo) {
-					if (vecchio.id!=null) {
-						this.db({id:vecchio.id}).update(vecchio.id, vecchio, true);
-					}
-				}*/
+				},
+                backupEliminazionePazientiConRefertoConsegnato : function() {
+                    // decurtazione dal DB dei pazianti con dataConsegna valorizzata <= dataCorrente - 3 mesi.
+                    let dataControllo = new Date();
+                    dataControllo.setMonth(dataControllo.getMonth()-3);
+
+                    this.filtro = {dataConsegna: {"!is": null}, dataConsegna: {lt:dataControllo.format()}}
+                    this.toExcel("bkp-");
+
+                    setTimeout(function(){
+                        let ris = confirm("Controlla il file excell appena prodotto, se confermi quei pazienti verranno eliminani dal DB online, per mantenere l'applicazione più veloce. Confermi?");
+                        if (ris) {
+                            this.db(this.filtro).remove();
+                            this.filtro = {};
+                        }
+                    }, 2000);
+                }
 			}
 		});
 		
